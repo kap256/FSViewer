@@ -39,6 +39,7 @@
             this.pictureBox.Size = new System.Drawing.Size(573, 380);
             this.pictureBox.TabIndex = 0;
             this.pictureBox.TabStop = false;
+            this.pictureBox.Click += new System.EventHandler(this.MainForm_Click);
             // 
             // MainForm
             // 
@@ -52,6 +53,7 @@
             this.Text = "Form1";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Shown += new System.EventHandler(this.MainForm_Shown);
+            this.Click += new System.EventHandler(this.MainForm_Click);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.ResumeLayout(false);

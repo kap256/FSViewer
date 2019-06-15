@@ -7,15 +7,33 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace FSViewer
 {
+    /// <summary>
+    /// 並び順を自然にするための比較クラス
+    /// </summary>
+    class StrCmpLogical : IComparer<string>
+    {
+        [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        public static extern int StrCmpLogicalW(string str1, string str2);
+
+        public int Compare(string x, string y)
+        {
+            return StrCmpLogicalW(x, y);
+        }
+    }
+
+    /// <summary>
+    /// フォームクラス
+    /// </summary>
     public partial class MainForm : Form
     {
-        List<FileInfo> ImageFiles = new List<FileInfo>();
+        List<string> ImageFiles = new List<string>();
         int Index = -1;
 
         /// <summary>
@@ -24,9 +42,10 @@ namespace FSViewer
         public MainForm(FileInfo info)
         {
             //IEnumだと使いにくいので、Listにするぞ。
+            //並び順も自然にしよう。
             int index = 0;
-            foreach (var file in info.Directory.EnumerateFiles()) {
-                ImageFiles.Add(file);
+            foreach (var file in info.Directory.EnumerateFiles().OrderBy(value => value.FullName, new StrCmpLogical())) {
+                ImageFiles.Add(file.FullName);
                 if(file.FullName == info.FullName) {
                     Index = index;
                 } else {
@@ -35,6 +54,7 @@ namespace FSViewer
             }
 
             //こんな事態になる前に例外死してそうだが……。
+            Index = ImageFiles.FindIndex(var => var == info.FullName);
             if (Index < 0) {
                 return;
             }
@@ -59,7 +79,7 @@ namespace FSViewer
 
                 var file = ImageFiles[Index];
                 try {
-                    using (var img = Image.FromFile(file.FullName)) {
+                    using (var img = Image.FromFile(file)) {
                         SetImageAndSize(img);
                     }
                     return;
@@ -149,6 +169,14 @@ namespace FSViewer
         private void MainForm_Shown(object sender, EventArgs e)
         {
             ReadImage(0);
+        }
+
+        /// <summary>
+        /// クリックで閉じる。
+        /// </summary>
+        private void MainForm_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }
