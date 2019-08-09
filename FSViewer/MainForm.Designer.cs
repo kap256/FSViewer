@@ -1,4 +1,7 @@
-﻿namespace FSViewer
+﻿using FSViewer.Properties;
+using System.Resources;
+
+namespace FSViewer
 {
     partial class MainForm
     {
@@ -50,7 +53,8 @@
             this.Controls.Add(this.pictureBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "MainForm";
-            this.Text = "Form1";
+            this.Text = "FSViewer";
+            this.Icon = Resources.icon;
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Shown += new System.EventHandler(this.MainForm_Shown);
             this.Click += new System.EventHandler(this.MainForm_Click);

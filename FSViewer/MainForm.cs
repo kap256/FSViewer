@@ -61,6 +61,7 @@ namespace FSViewer
             
             InitializeComponent();
         }
+
         /// <summary>
         /// 画像読み込み。
         /// </summary>
@@ -172,11 +173,11 @@ namespace FSViewer
         }
 
         /// <summary>
-        /// クリックで閉じる。
+        /// クリックで閉じる。->却下
         /// </summary>
         private void MainForm_Click(object sender, EventArgs e)
         {
-            this.Close();
+            //this.Close();
         }
     }
 }
