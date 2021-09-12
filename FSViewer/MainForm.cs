@@ -14,25 +14,25 @@ using System.Windows.Forms;
 
 namespace FSViewer
 {
-    /// <summary>
-    /// 並び順を自然にするための比較クラス
-    /// </summary>
-    class StrCmpLogical : IComparer<string>
-    {
-        [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
-        public static extern int StrCmpLogicalW(string str1, string str2);
-
-        public int Compare(string x, string y)
-        {
-            return StrCmpLogicalW(x, y);
-        }
-    }
 
     /// <summary>
     /// フォームクラス
     /// </summary>
     public partial class MainForm : Form
     {
+        /// <summary>
+        /// 並び順を自然にするための比較クラス
+        /// </summary>
+        class StrCmpLogical : IComparer<string>
+        {
+            [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+            public static extern int StrCmpLogicalW(string str1, string str2);
+
+            public int Compare(string x, string y)
+            {
+                return StrCmpLogicalW(x, y);
+            }
+        }
         List<string> ImageFiles = new List<string>();
         int Index = -1;
 
@@ -79,6 +79,7 @@ namespace FSViewer
                 }
 
                 var file = ImageFiles[Index];
+                label_filename.Text = Path.GetFileName(file);
                 try {
                     using (var img = Image.FromFile(file)) {
                         SetImageAndSize(img);
