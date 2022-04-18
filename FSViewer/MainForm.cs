@@ -20,6 +20,11 @@ namespace FSViewer
     /// </summary>
     public partial class MainForm : Form
     {
+        List<string> ImageFiles = new List<string>();
+        int Index = -1;
+        Image CurrentImg = null;
+
+
         /// <summary>
         /// 並び順を自然にするための比較クラス
         /// </summary>
@@ -33,8 +38,6 @@ namespace FSViewer
                 return StrCmpLogicalW(x, y);
             }
         }
-        List<string> ImageFiles = new List<string>();
-        int Index = -1;
 
         /// <summary>
         /// コンストラクタ。ディレクトリの走査と、最初の画像読み込み
@@ -46,7 +49,7 @@ namespace FSViewer
             int index = 0;
             foreach (var file in info.Directory.EnumerateFiles().OrderBy(value => value.FullName, new StrCmpLogical())) {
                 ImageFiles.Add(file.FullName);
-                if(file.FullName == info.FullName) {
+                if (file.FullName == info.FullName) {
                     Index = index;
                 } else {
                     index++;
@@ -58,7 +61,7 @@ namespace FSViewer
             if (Index < 0) {
                 return;
             }
-            
+
             InitializeComponent();
         }
 
@@ -74,7 +77,7 @@ namespace FSViewer
                 Index += move;
                 if (Index < 0) {
                     Index = ImageFiles.Count - 1;
-                }else if(Index >= ImageFiles.Count) {
+                } else if (Index >= ImageFiles.Count) {
                     Index = 0;
                 }
 
@@ -83,13 +86,18 @@ namespace FSViewer
                 try {
                     using (var img = Image.FromFile(file)) {
                         SetImageAndSize(img);
+                        if (CurrentImg != null) {
+                            CurrentImg.Dispose();
+                            CurrentImg = null;
+                        }
+                        CurrentImg = (Image)(img.Clone());
                     }
                     return;
                 } catch {
                     //画像じゃなかったっぽい。次のファイルを読みに行く。
                 }
 
-            } while (Index!=old);
+            } while (Index != old);
         }
 
         /// <summary>
@@ -98,21 +106,21 @@ namespace FSViewer
         void SetImageAndSize(Image img)
         {
             //アスペクト比計算
-            double win_ratio = (double)(this.Width) / (double)(this.Height);
+            double win_ratio = (double)(ClientSize.Width) / (double)(ClientSize.Height);
             double img_ratio = (double)(img.Width) / (double)(img.Height);
 
             //拡大率計算
             double zoom;
-            if(win_ratio > img_ratio) {
+            if (win_ratio > img_ratio) {
                 //ディスプレイのほうが横長
-                zoom = (double)(this.Height) / (double)(img.Height);
+                zoom = (double)(ClientSize.Height) / (double)(img.Height);
             } else {
                 //ディスプレイのほうが縦長
-                zoom = (double)(this.Width) / (double)(img.Width);
+                zoom = (double)(ClientSize.Width) / (double)(img.Width);
             }
 
             //拡大描画対象を作成
-            Bitmap canvas = new Bitmap(this.Width, this.Height);
+            Bitmap canvas = new Bitmap(ClientSize.Width, ClientSize.Height);
             using (Graphics g = Graphics.FromImage(canvas)) {
                 if (IsDotImage(zoom, img)) {
                     //ドット絵なら二アレストネイバーで整数倍
@@ -129,7 +137,7 @@ namespace FSViewer
             //ピクチャーボックスに設定
             pictureBox.Width = (int)(img.Width * zoom);
             pictureBox.Height = (int)(img.Height * zoom);
-            pictureBox.Location= new Point((this.Width- pictureBox.Width)/2, (this.Height - pictureBox.Height) / 2);
+            pictureBox.Location = new Point((ClientSize.Width - pictureBox.Width) / 2, (ClientSize.Height - pictureBox.Height) / 2);
             pictureBox.Image = canvas;
 
         }
@@ -163,6 +171,12 @@ namespace FSViewer
                 case Keys.Up:
                     ReadImage(-1);
                     break;
+                case Keys.F11:
+                    ToggleWindow();
+                    break;
+                case Keys.F12:
+                    ToggleFilename();
+                    break;
             }
         }
         /// <summary>
@@ -179,6 +193,39 @@ namespace FSViewer
         private void MainForm_Click(object sender, EventArgs e)
         {
             //this.Close();
+        }
+
+
+        /// <summary>
+        /// ウインドウモード切替
+        /// </summary>
+        private void ToggleWindow()
+        {
+            if (this.FormBorderStyle == FormBorderStyle.None) {
+                this.FormBorderStyle = FormBorderStyle.Sizable;
+                this.WindowState = FormWindowState.Normal;
+            } else {
+                this.FormBorderStyle = FormBorderStyle.None;
+                this.WindowState = FormWindowState.Maximized;
+            }
+        }
+
+        /// <summary>
+        //  ファイル名表示切替
+        /// </summary>
+        private void ToggleFilename()
+        {
+            label_filename.Visible = !label_filename.Visible;
+        }
+
+        /// <summary>
+        //  サイズ変更
+        /// </summary>
+        private void MainForm_SizeChanged(object sender, EventArgs e)
+        {
+            if (CurrentImg != null) {
+                SetImageAndSize(CurrentImg);
+            }
         }
     }
 }
