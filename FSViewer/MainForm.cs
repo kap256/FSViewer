@@ -20,10 +20,20 @@ namespace FSViewer
     /// </summary>
     public partial class MainForm : Form
     {
-        List<string> ImageFiles = new List<string>();
-        int Index = -1;
-        Image CurrentImg = null;
-
+        /// <summary>
+        /// 画像ファイル情報クラス
+        /// </summary>
+        class ImageFile
+        {
+            public string Path;
+            public bool IsDelete;
+            public ImageFile(string path)
+            {
+                Path = path;
+                IsDelete = false;
+            }
+            public string Label => $"{(IsDelete?"[×] ":"")}{System.IO.Path.GetFileName(Path)}";
+        }
 
         /// <summary>
         /// 並び順を自然にするための比較クラス
@@ -39,6 +49,11 @@ namespace FSViewer
             }
         }
 
+        //メンバのみなさん
+        List<ImageFile> ImageFiles = new List<ImageFile>();
+        int Index = -1;
+        Image CurrentImg = null;
+
         /// <summary>
         /// コンストラクタ。ディレクトリの走査と、最初の画像読み込み
         /// </summary>
@@ -48,7 +63,7 @@ namespace FSViewer
             //並び順も自然にしよう。
             int index = 0;
             foreach (var file in info.Directory.EnumerateFiles().OrderBy(value => value.FullName, new StrCmpLogical())) {
-                ImageFiles.Add(file.FullName);
+                ImageFiles.Add(new ImageFile(file.FullName));
                 if (file.FullName == info.FullName) {
                     Index = index;
                 } else {
@@ -57,7 +72,7 @@ namespace FSViewer
             }
 
             //こんな事態になる前に例外死してそうだが……。
-            Index = ImageFiles.FindIndex(var => var == info.FullName);
+            Index = ImageFiles.FindIndex(var => var.Path == info.FullName);
             if (Index < 0) {
                 return;
             }
@@ -82,9 +97,9 @@ namespace FSViewer
                 }
 
                 var file = ImageFiles[Index];
-                label_filename.Text = Path.GetFileName(file);
+                label_filename.Text = file.Label;
                 try {
-                    using (var img = Image.FromFile(file)) {
+                    using (var img = Image.FromFile(file.Path)) {
                         SetImageAndSize(img);
                         if (CurrentImg != null) {
                             CurrentImg.Dispose();
@@ -177,6 +192,9 @@ namespace FSViewer
                 case Keys.F12:
                     ToggleFilename();
                     break;
+                case Keys.Delete:
+                    SetDeleteFlag();
+                    break;
             }
         }
         /// <summary>
@@ -194,7 +212,6 @@ namespace FSViewer
         {
             //this.Close();
         }
-
 
         /// <summary>
         /// ウインドウモード切替
@@ -219,12 +236,54 @@ namespace FSViewer
         }
 
         /// <summary>
+        //  ファイルを削除フォルダに移動させるフラグを立てる
+        /// </summary>
+        private void SetDeleteFlag()
+        {
+
+            var file = ImageFiles[Index];
+            file.IsDelete = !file.IsDelete;
+            label_filename.Text = file.Label;
+        }
+
+        /// <summary>
         //  サイズ変更
         /// </summary>
         private void MainForm_SizeChanged(object sender, EventArgs e)
         {
             if (CurrentImg != null) {
                 SetImageAndSize(CurrentImg);
+            }
+        }
+
+        /// <summary>
+        /// 終了処理
+        /// </summary>
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            CurrentImg.Dispose();
+            CurrentImg = null;
+
+            DeleteFlagged();
+        }
+        /// <summary>
+        //  フラグ済みファイルを削除フォルダに移動する。
+        /// 終了処理以外で呼ぶこととか考えてないからな？
+        /// </summary>
+        private void DeleteFlagged()
+        {
+            string dir_path = null;
+            foreach (var file in ImageFiles) {
+                if (file.IsDelete) {
+                    var file_info = new FileInfo(file.Path);
+                    if (dir_path == null) {
+                        dir_path = file_info.DirectoryName + @"\__delete\";
+                        if (!Directory.Exists(dir_path)) {
+                            Directory.CreateDirectory(dir_path);
+                        }
+                    }
+                    file_info.MoveTo(dir_path + file_info.Name);
+                }
             }
         }
     }

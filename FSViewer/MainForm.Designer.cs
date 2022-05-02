@@ -71,6 +71,7 @@ namespace FSViewer
             this.Name = "MainForm";
             this.Text = "FSViewer";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.Shown += new System.EventHandler(this.MainForm_Shown);
             this.SizeChanged += new System.EventHandler(this.MainForm_SizeChanged);
             this.Click += new System.EventHandler(this.MainForm_Click);
